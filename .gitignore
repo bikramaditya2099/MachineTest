@@ -1,0 +1,13 @@
+# Maven / Java build output
+backend/target/
+*.class
+*.jar
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store

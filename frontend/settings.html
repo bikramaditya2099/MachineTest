@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — JWT Auth System (Admin Only)</title>
+  <meta name="description" content="Administrator settings panel for JWT authentication system"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<script>
+  // Guard: only logged-in Administrators may view this page
+  if (!localStorage.getItem('jwt_token')) {
+    window.location.replace('index.html');
+  } else if (localStorage.getItem('user_type') !== 'ADMINISTRATOR') {
+    window.location.replace('dashboard.html');
+  }
+</script>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🔐</div>
+        <span>AuthSystem</span>
+      </div>
+    </div>
+
+    <nav class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-item-icon">🏠</span>
+        Dashboard
+      </a>
+      <a href="dashboard.html#products" class="nav-item">
+        <span class="nav-item-icon">📦</span>
+        Products
+      </a>
+      <a href="settings.html" class="nav-item active" id="nav-settings">
+        <span class="nav-item-icon">⚙️</span>
+        Settings
+        <span class="nav-badge" style="background:#f59e0b;">Admin</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-username">Administrator</div>
+          <div class="user-role">🔑 ADMINISTRATOR</div>
+        </div>
+      </div>
+      <button
+        onclick="handleLogout()"
+        class="btn btn-secondary"
+        style="width:100%; margin-top:10px; font-size:13px; padding:9px;"
+      >
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">⚙️ System Settings</h1>
+        <p class="page-subtitle">Administrator-only configuration panel</p>
+      </div>
+      <span class="badge badge-admin" style="font-size:13px; padding:8px 16px;">🔑 ADMINISTRATOR</span>
+    </div>
+
+    <!-- Access Denied Panel (shown to non-admins by JS) -->
+    <div id="access-denied" class="hidden" style="text-align:center; padding:80px 24px;">
+      <div style="font-size:64px; margin-bottom:16px;">🚫</div>
+      <div style="font-size:24px; font-weight:800; color:var(--accent-danger); margin-bottom:8px;">Access Denied</div>
+      <div style="color:var(--text-secondary); margin-bottom:24px;">
+        This page is restricted to <strong>Administrator</strong> users only.
+      </div>
+      <a href="dashboard.html" class="btn btn-primary" style="width:auto; padding:12px 32px;">
+        ← Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Settings Panel (shown to admins) -->
+    <div id="settings-content">
+
+      <!-- Alert -->
+      <div id="settings-alert" class="alert"></div>
+
+      <!-- System Info -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px;">
+
+        <div class="table-card" style="padding:24px;">
+          <div style="font-size:16px; font-weight:700; margin-bottom:16px;">🖥️ System Information</div>
+          <div id="system-info" style="display:grid; gap:12px;">
+            <div class="flex justify-between items-center" style="border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px;">System Name</span>
+              <span style="font-weight:600; font-size:13px;" id="sys-name">—</span>
+            </div>
+            <div class="flex justify-between items-center" style="border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px;">Version</span>
+              <span style="font-weight:600; font-size:13px;" id="sys-version">—</span>
+            </div>
+            <div class="flex justify-between items-center" style="border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px;">Storage Type</span>
+              <span style="font-weight:600; font-size:13px;" id="sys-storage">—</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span style="color:var(--text-secondary); font-size:13px;">Token Expiry</span>
+              <span class="badge badge-primary" id="sys-token">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card" style="padding:24px;">
+          <div style="font-size:16px; font-weight:700; margin-bottom:16px;">🔒 Password Policy</div>
+          <div id="pwd-policy" style="display:grid; gap:12px;">
+            <div class="flex justify-between items-center" style="border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px;">Min Length</span>
+              <span class="badge badge-success" id="pwd-min">—</span>
+            </div>
+            <div class="flex justify-between items-center" style="border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px;">Max Length</span>
+              <span class="badge badge-success" id="pwd-max">—</span>
+            </div>
+            <div class="flex justify-between items-center" style="border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px;">Requires Uppercase</span>
+              <span id="pwd-upper">—</span>
+            </div>
+            <div class="flex justify-between items-center" style="border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px;">Requires Digit</span>
+              <span id="pwd-digit">—</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span style="color:var(--text-secondary); font-size:13px;">Requires Special Char</span>
+              <span id="pwd-special">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Restricted Countries -->
+      <div class="table-card" style="padding:24px; margin-bottom:28px;">
+        <div style="font-size:16px; font-weight:700; margin-bottom:12px;">🌍 Restricted Countries</div>
+        <div style="color:var(--text-secondary); font-size:13px; margin-bottom:12px;">
+          Users from these countries cannot register in the system.
+        </div>
+        <div id="restricted-countries" style="display:flex; flex-wrap:wrap; gap:8px;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- API Endpoints Reference -->
+      <div class="table-card" style="overflow:hidden;">
+        <div class="table-toolbar">
+          <div>
+            <div class="table-title">📋 API Endpoints Reference</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">All available REST API endpoints</div>
+          </div>
+          <a
+            href="http://localhost:8080/swagger-ui.html"
+            target="_blank"
+            class="btn btn-secondary"
+            style="width:auto; padding:8px 16px; font-size:13px;"
+          >
+            📖 Open Swagger UI ↗
+          </a>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Auth Required</th>
+                <th>Role</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="badge badge-success">POST</span></td><td><code>/api/auth/register</code></td><td>No</td><td>—</td><td>Register user</td></tr>
+              <tr><td><span class="badge badge-success">POST</span></td><td><code>/api/auth/verify-otp</code></td><td>No</td><td>—</td><td>Verify OTP</td></tr>
+              <tr><td><span class="badge badge-success">POST</span></td><td><code>/api/auth/login</code></td><td>No</td><td>—</td><td>Login → JWT</td></tr>
+              <tr><td><span class="badge badge-success">POST</span></td><td><code>/api/auth/logout</code></td><td>Yes</td><td>Any</td><td>Logout</td></tr>
+              <tr><td><span class="badge badge-primary">GET</span></td><td><code>/api/dashboard</code></td><td>Yes</td><td>Any</td><td>Dashboard welcome</td></tr>
+              <tr><td><span class="badge badge-primary">GET</span></td><td><code>/api/settings</code></td><td>Yes</td><td><span class="badge badge-admin">Admin</span></td><td>Admin settings</td></tr>
+              <tr><td><span class="badge badge-primary">GET</span></td><td><code>/api/products</code></td><td>Yes</td><td>Any</td><td>List products (paginated)</td></tr>
+              <tr><td><span class="badge badge-primary">GET</span></td><td><code>/api/products/{id}</code></td><td>Yes</td><td>Any</td><td>Get product</td></tr>
+              <tr><td><span class="badge badge-success">POST</span></td><td><code>/api/products</code></td><td>Yes</td><td>Any</td><td>Create product</td></tr>
+              <tr><td><span class="badge badge-admin">PUT</span></td><td><code>/api/products/{id}</code></td><td>Yes</td><td>Any</td><td>Update product</td></tr>
+              <tr><td><span class="badge badge-admin" style="background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.3);">DELETE</span></td><td><code>/api/products/{id}</code></td><td>Yes</td><td>Any</td><td>Delete product</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  // API_BASE and requireAuth() come from js/auth.js
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    requireAuth();
+
+    const username = localStorage.getItem('username') || 'Admin';
+    const userType = localStorage.getItem('user_type');
+
+    document.getElementById('sidebar-username').textContent = username;
+    document.getElementById('sidebar-avatar').textContent = username.charAt(0).toUpperCase();
+
+    // Only admins should see this page
+    if (userType !== 'ADMINISTRATOR') {
+      document.getElementById('settings-content').classList.add('hidden');
+      document.getElementById('access-denied').classList.remove('hidden');
+      return;
+    }
+
+    // Load settings from API
+    await loadSettings();
+  });
+
+  async function loadSettings() {
+    const token = localStorage.getItem('jwt_token');
+    try {
+      const response = await fetch(`${API_BASE}/settings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.status === 403) {
+        document.getElementById('settings-content').classList.add('hidden');
+        document.getElementById('access-denied').classList.remove('hidden');
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        const s = data.data;
+
+        // System info
+        setText('sys-name', s.systemName || '—');
+        setText('sys-version', s.version || '—');
+        setText('sys-storage', s.userStorageType || '—');
+        setText('sys-token', s.tokenExpiry || '—');
+
+        // Password policy
+        const pp = s.passwordPolicy || {};
+        setText('pwd-min', pp.minLength || '—');
+        setText('pwd-max', pp.maxLength || '—');
+        setText('pwd-upper', pp.requireUppercase ? '✅ Yes' : '❌ No');
+        setText('pwd-digit', pp.requireDigit ? '✅ Yes' : '❌ No');
+        setText('pwd-special', pp.requireSpecialChar ? '✅ Yes' : '❌ No');
+
+        // Restricted countries
+        const countriesEl = document.getElementById('restricted-countries');
+        const rc = s.restrictedCountries || [];
+        const countries = Array.isArray(rc) ? rc : String(rc).split(',');
+        countriesEl.innerHTML = countries.map(c => `
+          <span class="badge badge-admin" style="font-size:12px; padding:6px 12px;">🚫 ${c.trim()}</span>
+        `).join('');
+      }
+    } catch (err) {
+      const alert = document.getElementById('settings-alert');
+      alert.className = 'alert alert-error visible';
+      alert.textContent = '❌ Failed to load settings: ' + err.message;
+    }
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function requireAuth() {
+    if (!localStorage.getItem('jwt_token')) {
+      window.location.href = 'index.html';
+    }
+  }
+</script>
+</body>
+</html>

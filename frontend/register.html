@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — JWT Auth System</title>
+  <meta name="description" content="Create a new account in the JWT authentication system"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<div class="auth-container">
+  <div class="auth-card wide">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-icon">🔐</div>
+      <span class="brand-name">AuthSystem</span>
+    </div>
+
+    <!-- Alert (shared between both sections) -->
+    <div id="register-alert" class="alert"></div>
+
+    <!-- ── Section 1: Registration Form ─────────────────────── -->
+    <div id="reg-section">
+      <h1 class="auth-title">Create account</h1>
+      <p class="auth-subtitle">Fill in the details below to get started</p>
+
+      <form id="register-form" onsubmit="handleRegister(event)" novalidate>
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="reg-username">Username</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input
+              type="text"
+              id="reg-username"
+              class="form-control"
+              placeholder="8–50 characters"
+              minlength="8"
+              maxlength="50"
+              autocomplete="username"
+              required
+            />
+          </div>
+          <div class="field-error" id="username-error">Username must be 8–50 characters</div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="reg-email">Email Address</label>
+          <div class="input-wrapper">
+            <span class="input-icon">✉️</span>
+            <input
+              type="email"
+              id="reg-email"
+              class="form-control"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="field-error" id="email-error">Email must contain '@' and '.'</div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input
+              type="password"
+              id="reg-password"
+              class="form-control"
+              placeholder="8–12 chars, uppercase, digit, special"
+              autocomplete="new-password"
+              required
+              oninput="updatePasswordStrength(this.value, 'pwd-strength')"
+            />
+            <button
+              type="button"
+              onclick="togglePassword('reg-password','reg-pwd-eye')"
+              style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;"
+              id="reg-pwd-eye"
+              aria-label="Toggle password"
+            >👁️</button>
+          </div>
+          <!-- Password strength indicator -->
+          <div class="password-strength" id="pwd-strength">
+            <div class="strength-bar"><div class="strength-fill"></div></div>
+            <div class="strength-text"></div>
+          </div>
+          <div class="field-error" id="password-error">
+            8–12 chars with uppercase, lowercase, digit &amp; special character (@$!%*?&amp;_#)
+          </div>
+        </div>
+
+        <!-- User Type -->
+        <div class="form-group">
+          <label for="reg-usertype">User Type</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🎭</span>
+            <select id="reg-usertype" class="form-control" required>
+              <option value="" disabled selected>Select user type</option>
+              <option value="STANDARD_USER">Standard User</option>
+              <option value="ADMINISTRATOR">Administrator</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Country -->
+        <div class="form-group">
+          <label for="reg-country">Country</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🌍</span>
+            <select id="reg-country" class="form-control" required onchange="onCountryChange()">
+              <option value="" disabled selected>Detecting your country…</option>
+            </select>
+          </div>
+          <div class="field-error" id="country-error">
+            Registration is not allowed from this country.
+          </div>
+          <div id="country-hint" style="font-size:12px; color:var(--text-muted); margin-top:6px;"></div>
+        </div>
+
+        <button type="submit" id="register-btn" class="btn btn-primary" style="margin-top:8px;">
+          <div class="spinner" aria-hidden="true"></div>
+          Create Account
+        </button>
+
+      </form>
+
+      <div class="auth-footer" style="margin-top:20px;">
+        Already have an account?
+        <a href="index.html" class="auth-link">Sign in →</a>
+      </div>
+    </div>
+
+    <!-- ── Section 2: OTP Verification ──────────────────────── -->
+    <div id="otp-section" class="hidden">
+      <div style="text-align:center; margin-bottom:24px;">
+        <div style="font-size:48px; margin-bottom:12px;">📱</div>
+        <h1 class="auth-title">Verify your account</h1>
+        <p class="auth-subtitle">
+          Enter the OTP for <strong id="otp-username" style="color:var(--accent-primary);"></strong>
+        </p>
+      </div>
+
+      <!-- OTP Display (shown in dev mode) -->
+      <div class="otp-display visible" id="otp-display">
+        <div class="otp-label">🔑 Your One-Time Password (development mode)</div>
+        <div class="otp-code" id="otp-code">------</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
+          In production, this would be sent to your email
+        </div>
+      </div>
+
+      <div id="otp-alert" class="alert"></div>
+
+      <form id="otp-form" onsubmit="handleVerifyOtp(event)" novalidate>
+        <div class="form-group">
+          <label for="otp-input">6-Digit OTP</label>
+          <input
+            type="text"
+            id="otp-input"
+            class="form-control no-icon"
+            placeholder="Enter 6-digit OTP"
+            maxlength="6"
+            pattern="\d{6}"
+            style="text-align:center; font-size:24px; letter-spacing:8px; font-weight:700;"
+            required
+          />
+        </div>
+
+        <button type="submit" id="otp-btn" class="btn btn-primary">
+          <div class="spinner" aria-hidden="true"></div>
+          Verify OTP
+        </button>
+      </form>
+
+      <div class="auth-footer" style="margin-top:20px;">
+        <button
+          onclick="document.getElementById('reg-section').classList.remove('hidden'); document.getElementById('otp-section').classList.add('hidden');"
+          style="background:none;border:none;cursor:pointer;color:var(--accent-primary);font-size:14px;font-weight:500;"
+        >
+          ← Back to Registration
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  redirectIfAuth();
+
+  // Live validation feedback
+  document.getElementById('reg-username').addEventListener('blur', function() {
+    const err = document.getElementById('username-error');
+    if (!validateUsername(this.value.trim())) {
+      err.classList.add('visible');
+    } else {
+      err.classList.remove('visible');
+    }
+  });
+
+  document.getElementById('reg-email').addEventListener('blur', function() {
+    const err = document.getElementById('email-error');
+    if (!validateEmail(this.value.trim())) {
+      err.classList.add('visible');
+    } else {
+      err.classList.remove('visible');
+    }
+  });
+
+  document.getElementById('reg-password').addEventListener('blur', function() {
+    const err = document.getElementById('password-error');
+    if (!validatePassword(this.value)) {
+      err.classList.add('visible');
+    } else {
+      err.classList.remove('visible');
+    }
+  });
+</script>
+</body>
+</html>

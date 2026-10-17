@@ -1,0 +1,52 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: jwt-auth-system
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/authdb
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Allow CORS from frontend
+  mvc:
+    cors:
+      allowed-origins: "*"
+
+# JWT Configuration
+jwt:
+  secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+  expiration: 86400000   # 24 hours in milliseconds
+
+# Springdoc / Swagger
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  show-actuator: false
+
+# Logging
+logging:
+  level:
+    com.blueocean: DEBUG
+    org.springframework.security: INFO
+
+# Country restriction list (comma-separated ISO codes)
+app:
+  restricted-countries: SY,AF,IR,PK
+  dev-mode: false   # Set true to skip IP-based country check (for local testing)

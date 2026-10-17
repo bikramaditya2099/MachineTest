@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — JWT Auth System</title>
+  <meta name="description" content="User dashboard for JWT authentication system"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── Sidebar ────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🔐</div>
+        <span>AuthSystem</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-section">
+      <div class="nav-section-label">Main</div>
+
+      <a href="dashboard.html" class="nav-item active" id="nav-dashboard">
+        <span class="nav-item-icon">🏠</span>
+        Dashboard
+      </a>
+
+      <a href="#products" class="nav-item" id="nav-products" onclick="setActivePage('products')">
+        <span class="nav-item-icon">📦</span>
+        Products
+        <span class="nav-badge" id="product-count">—</span>
+      </a>
+
+      <!-- Admin-only settings link -->
+      <a href="settings.html" class="nav-item admin-only" id="nav-settings">
+        <span class="nav-item-icon">⚙️</span>
+        Settings
+        <span class="nav-badge" style="background:#f59e0b;">Admin</span>
+      </a>
+    </nav>
+
+    <!-- User info + logout at bottom -->
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebar-avatar">U</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-username">Loading…</div>
+          <div class="user-role" id="sidebar-role">—</div>
+        </div>
+      </div>
+      <button
+        onclick="handleLogout()"
+        class="btn btn-secondary"
+        style="width:100%; margin-top:10px; font-size:13px; padding:9px;"
+      >
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <div class="welcome-greeting">👋 Hello there,</div>
+      <div class="welcome-name" id="welcome-name">Welcome!</div>
+      <div class="welcome-sub" id="welcome-role">JWT Authentication System</div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-grid" id="products">
+      <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value" id="product-count-stat">—</div>
+        <div class="stat-label">Total Products</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔑</div>
+        <div class="stat-value" style="font-size:18px; -webkit-text-fill-color:var(--accent-success);" id="stat-role">—</div>
+        <div class="stat-label">Your Role</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🛡️</div>
+        <div class="stat-value" style="font-size:18px; -webkit-text-fill-color:var(--accent-info);">JWT</div>
+        <div class="stat-label">Auth Method</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-value" style="font-size:18px; -webkit-text-fill-color:var(--text-primary);">24h</div>
+        <div class="stat-label">Token Validity</div>
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div>
+          <div class="table-title">📦 Product Management</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+            CRUD operations with pagination, sorting &amp; filtering
+          </div>
+        </div>
+        <div class="flex gap-2 items-center" style="flex-wrap:wrap;">
+          <input
+            type="text"
+            id="product-search"
+            class="search-input"
+            placeholder="Search products…"
+            aria-label="Search products"
+          />
+          <button
+            id="add-product-btn"
+            class="btn btn-primary"
+            onclick="openCreateModal()"
+            style="width:auto; padding:9px 18px; font-size:13px;"
+          >
+            ➕ Add Product
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="table-loading" style="display:none; text-align:center; padding:32px; color:var(--text-muted);">
+        <div style="font-size:24px; margin-bottom:8px; animation:spin 1s linear infinite;">⚙️</div>
+        Loading products…
+      </div>
+
+      <!-- Table -->
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody">
+            <tr>
+              <td colspan="6" style="text-align:center; padding:48px; color:var(--text-muted);">
+                Loading…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div id="pagination" class="pagination"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Product Modal ──────────────────────────────────────────── -->
+<div id="product-modal" class="modal-overlay" onclick="if(event.target===this) closeModal('product-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Add Product</div>
+      <button class="modal-close" onclick="closeModal('product-modal')" aria-label="Close">✕</button>
+    </div>
+
+    <form id="product-form" onsubmit="handleProductSubmit(event)" novalidate>
+
+      <div class="form-group">
+        <label for="p-name">Product Name *</label>
+        <input type="text" id="p-name" class="form-control no-icon" placeholder="e.g. Wireless Mouse" maxlength="100" required/>
+      </div>
+
+      <div class="form-group">
+        <label for="p-description">Description</label>
+        <textarea
+          id="p-description"
+          class="form-control no-icon"
+          placeholder="Optional product description…"
+          rows="3"
+          style="resize:vertical; padding-left:16px;"
+        ></textarea>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label for="p-price">Price (₹) *</label>
+          <input type="number" id="p-price" class="form-control no-icon" placeholder="0.00" min="0.01" step="0.01" required/>
+        </div>
+        <div class="form-group">
+          <label for="p-quantity">Quantity *</label>
+          <input type="number" id="p-quantity" class="form-control no-icon" placeholder="0" min="0" required/>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('product-modal')" style="flex:1;">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" style="flex:2;">
+          💾 Save Product
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+  // Update stats with loaded data
+  const origRenderProducts = window.renderProducts;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const userType = localStorage.getItem('user_type') || 'STANDARD_USER';
+    const statRole = document.getElementById('stat-role');
+    if (statRole) {
+      statRole.textContent = userType === 'ADMINISTRATOR' ? 'Admin' : 'Standard';
+    }
+  });
+
+  // Sync product count stat card with badge
+  const observer = new MutationObserver(() => {
+    const badge = document.getElementById('product-count');
+    const stat  = document.getElementById('product-count-stat');
+    if (badge && stat && badge.textContent !== '—') {
+      stat.textContent = badge.textContent;
+    }
+  });
+  const badge = document.getElementById('product-count');
+  if (badge) observer.observe(badge, { childList: true, characterData: true, subtree: true });
+</script>
+
+</body>
+</html>
